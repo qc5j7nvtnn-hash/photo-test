@@ -1,1 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>診断画像</title>
+<style>
+body{text-align:center;font-family:sans-serif;padding:20px}
+img{max-width:100%;border-radius:12px}
+</style>
+</head>
+<body>
 
+<h1>診断画像</h1>
+<img id="img">
+
+<script>
+const p=new URLSearchParams(location.search);
+document.getElementById("img").src=p.get("img");
+</script>
+
+</body>
+</html>
