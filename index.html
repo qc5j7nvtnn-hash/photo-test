@@ -1,70 +1,51 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>骨格診断</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 40px 20px;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    video {
-      width: 100%;
-      max-width: 400px;
-      border-radius: 12px;
-      background: #000;
-    }
-    button {
-      margin-top: 20px;
-      padding: 15px 30px;
-      font-size: 16px;
-      border: none;
-      border-radius: 999px;
-      background: black;
-      color: white;
-    }
-    .note {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #555;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>骨格診断</title>
+<style>
+body{font-family:sans-serif;text-align:center;padding:20px}
+video,canvas{width:100%;max-width:400px;border-radius:12px}
+button{margin:20px;padding:15px 30px;border-radius:999px;border:none;background:#000;color:#fff}
+#loading{display:none;font-size:20px}
+</style>
 </head>
 <body>
 
-  <h1>骨格診断</h1>
+<h1>骨格診断</h1>
 
-  <!-- カメラ表示 -->
-  <video id="camera" autoplay playsinline></video>
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" style="display:none;"></canvas>
 
-  <br>
-  <button>撮影する</button>
+<button onclick="shoot()">撮影する</button>
 
-  <div class="note">
-    ※上半身の骨格が判断できる状態（肌着、または何も着用していない状態）で撮影してください<br>
-    ※逆光にならないよう撮影してください
-  </div>
+<p id="loading">診断中です…</p>
 
-  <script>
-    const video = document.getElementById("camera");
+<p style="font-size:12px;color:#555">
+※上半身の骨格が判断できる状態で撮影してください<br>
+※逆光にならないよう撮影してください
+</p>
 
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-      audio: false
-    })
-    .then(stream => {
-      video.srcObject = stream;
-    })
-    .catch(err => {
-      alert("カメラが使えません：" + err);
-    });
-  </script>
+<script>
+const video = document.getElementById("video");
+navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}})
+.then(s=>video.srcObject=s);
+
+function shoot(){
+  const c=document.getElementById("canvas");
+  c.width=video.videoWidth;
+  c.height=video.videoHeight;
+  c.getContext("2d").drawImage(video,0,0);
+  const img=c.toDataURL("image/jpeg",0.8);
+
+  document.querySelector("button").style.display="none";
+  document.getElementById("loading").style.display="block";
+
+  // 受信側へ遷移（画像を渡す）
+  location.href="viewer.html?img="+encodeURIComponent(img);
+}
+</script>
 
 </body>
 </html>
